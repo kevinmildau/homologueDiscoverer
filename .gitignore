@@ -1,0 +1,5 @@
+.Rproj.user
+inst/doc
+
+# Ignore archive folder
+/archive

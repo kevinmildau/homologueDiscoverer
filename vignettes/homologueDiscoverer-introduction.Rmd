@@ -1,0 +1,97 @@
+---
+title: "homologueDiscoverer Introduction"
+output: rmarkdown::html_vignette
+runtime: shiny
+vignette: >
+  %\VignetteIndexEntry{homologueDiscoverer-introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+plotAnnotatedStatic <- function(annotated, legend_setting = "bottom"){
+  annotated <- mutate(annotated,
+                      homologue_id = if_else(is.na(homologue_id), 0L, homologue_id),
+                      homologue_id = as.factor(homologue_id))
+  colourCount = length(unique(annotated$homologue_id))
+  getPalette = colorRampPalette(RColorBrewer::brewer.pal(9, "Set1"))
+  ncolor = length(unique(annotated$homologue_id))
+  annotated <- arrange(annotated, desc(homologue_id))
+  g <- ggplot(annotated, aes(group = homologue_id)) +
+    geom_point(aes(x = rt, y = mz, color = homologue_id, size = homologue_id,
+                   shape = homologue_id, alpha = homologue_id)) +
+    geom_line(data = filter(annotated, homologue_id != 0),
+              aes(x = rt, y = mz, group = homologue_id), alpha = 0.4, size = 0.1) +
+    ggtitle("Annotated Peak Table") +
+    scale_colour_manual(values = c("black", getPalette(colourCount-1))) +
+    scale_alpha_manual(values =  c(0.2, rep(0.85, times = ncolor))) +
+    scale_size_manual(values = c(0.1, rep(1.5, times = ncolor))) +
+    scale_shape_manual(values = c(1, rep(19, times = ncolor))) +
+    xlab("Retention Time (s)") +
+    ylab("Mass to Charge Ratio") +
+    theme(legend.position=legend_setting, text = element_text(family="mono"))
+  return(g)
+}
+library(homologueDiscoverer)
+```
+
+In this tutorial a short use case example of homologueDiscoverer is shown. A subset of a peak_table with mz, rt and intensity columns will be searched for homologue series with two search settings, results will be merged together and visualized interactively.
+
+## Loading Data
+
+We make use of a subset of the mtbls1358 dataset for this example run. Here, we restrict ourselves to the area of the peak table above mass-to-charge ratios of 500 and retention times of 500 seconds. This area contains many homologue series and serves to illustrate the basic functionality of the tool. The peak table is loaded from the homologueDiscoverer package and immediately filtered. The peak table is stored as a tibble with 4 columns, a peak_id column giving unique feature identifiers in the form of integers, a mz column, containing the average mass-to-charge ratio of the feature, a rt column containing the average retention time of the feature in seconds, and an intensity column containing average feature intensity across samples (already aggregated in the example dataset).
+
+```{r setup}
+peak_table <- mtbls1358 %>%
+  filter(., mz > 500, rt > 500)
+print(peak_table)
+```
+
+## detectHomologues Run
+
+We make use of both the targeted and untargeted search modes in this example. In a first run, we look for homologue series with with a $\Delta mz$ between 10 and 20, and in a second run we look for the particula increment of 44.02628. Results of both runs are visualized using static ggplots, but can be explored in more detail using the ptbPlotInteractive function of homologueDiscoverer.
+
+```{r run_search, fig.height = 8, fig.width = 7, fig.align = "center"}
+library(rsidentifier)
+annotated_peak_table_01 <- detectHomologues(peak_table, mz_min = 10, mz_max = 20, 
+                                            rt_min = 1, rt_max = 100, 
+                                            ppm_tolerance = 5, 
+                                            min_series_length = 5,
+                                            search_mode = "untargeted", 
+                                            step_mode = "increment", verbose = F)
+annotated_peak_table_02 <- detectHomologues(peak_table, mz_steps = c(44.02628),
+                                            rt_min = 1, rt_max = 100, 
+                                            ppm_tolerance = 5, 
+                                            min_series_length = 5,
+                                            search_mode = "targeted", 
+                                            step_mode = "increment", verbose = F)
+plotAnnotatedStatic(annotated_peak_table_01) # use ptbPlotInteractive for interactive plot.
+plotAnnotatedStatic(annotated_peak_table_02) # use ptbPlotInteractive for interactive plot.
+```
+
+Before the two homologue search runs are combined, a quick check is done for potential overlaps in identifiers between the two sets of annotated series.
+
+```{r sdb}
+sdb <- sdbCreate(annotated_peak_table_01, sample_origin = "mtbls1358")
+overlapping_ids <- sdbCheckContained(sdb, annotated_peak_table_02, ppm_tolerance = 0.5, rt_tolerance = 0.5)
+print(overlapping_ids)
+# sdbPush is used to add the annotated parts of an annotated peak table to an existing database. 
+# The filter command can be used in conjunction with sdbCheckContained to avoid overlapping series.
+sdb <- sdbPush(sdb, filter(annotated_peak_table_02, !(homologue_id %in% overlapping_ids)))
+```
+
+In this example, one series has peak overlaps with a series already contained in sdb. To avoid issues with latter annotation runs, this peak is removed from the set to be added to the database. The final example of the vignette is to use the combined sdb object to annotate homologueSeries in the original peak table.
+
+```{r annotate, fig.height = 8, fig.width = 7, fig.align = "center"}
+dual_annotated <- annotateHomologues(peak_table, sdb, 
+                                     ppm_matching_tolerance = 1, 
+                                     ppm_step_tolerance = 10, 
+                                     rt_tolerance = 1,
+                                     min_match_length = 4)
+plotAnnotatedStatic(dual_annotated) # use ptbPlotInteractive for interactive plot.
+```
