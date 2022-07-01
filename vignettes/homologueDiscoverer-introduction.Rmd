@@ -47,6 +47,7 @@ In this tutorial a short use case example of homologueDiscoverer is shown. A sub
 We make use of a subset of the mtbls1358 dataset for this example run. Here, we restrict ourselves to the area of the peak table above mass-to-charge ratios of 500 and retention times of 500 seconds. This area contains many homologue series and serves to illustrate the basic functionality of the tool. The peak table is loaded from the homologueDiscoverer package and immediately filtered. The peak table is stored as a tibble with 4 columns, a peak_id column giving unique feature identifiers in the form of integers, a mz column, containing the average mass-to-charge ratio of the feature, a rt column containing the average retention time of the feature in seconds, and an intensity column containing average feature intensity across samples (already aggregated in the example dataset).
 
 ```{r setup}
+data(mtbls1358)
 peak_table <- mtbls1358 %>%
   filter(., mz > 500, rt > 500)
 print(peak_table)
@@ -57,7 +58,6 @@ print(peak_table)
 We make use of both the targeted and untargeted search modes in this example. In a first run, we look for homologue series with with a $\Delta mz$ between 10 and 20, and in a second run we look for the particula increment of 44.02628. Results of both runs are visualized using static ggplots, but can be explored in more detail using the ptbPlotInteractive function of homologueDiscoverer.
 
 ```{r run_search, fig.height = 8, fig.width = 7, fig.align = "center"}
-library(rsidentifier)
 annotated_peak_table_01 <- detectHomologues(peak_table, mz_min = 10, mz_max = 20, 
                                             rt_min = 1, rt_max = 100, 
                                             ppm_tolerance = 5, 
@@ -95,3 +95,12 @@ dual_annotated <- annotateHomologues(peak_table, sdb,
                                      min_match_length = 4)
 plotAnnotatedStatic(dual_annotated) # use ptbPlotInteractive for interactive plot.
 ```
+
+The augmented database can also be inspected numerically from the console, and summaries for the homologues can be created:
+
+```{r db_example, fig.height = 8, fig.width = 7, fig.align = "center"}
+print(dual_annotated, width = Inf)
+
+summary <- sdbSummarize(dual_annotated)
+```
+

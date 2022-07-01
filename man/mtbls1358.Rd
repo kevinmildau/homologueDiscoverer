@@ -3,7 +3,7 @@
 \docType{data}
 \name{mtbls1358}
 \alias{mtbls1358}
-\title{MTBLS1358 dataset}
+\title{mtbls1358}
 \format{
 A data frame with 16,106 rows and 4 variables:
 \describe{
@@ -12,9 +12,6 @@ A data frame with 16,106 rows and 4 variables:
 \item{rt}{retention time in seconds, type double}
 \item{intensity}{average feature intensity across the different samples of the original MTBLS1358 dataset, type double}
 }
-}
-\source{
-
 }
 \usage{
 mtbls1358
