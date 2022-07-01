@@ -78,8 +78,16 @@ While there are peaks in the ordered peak table
 Homologue series heuristics are built into candidate search, hence no further checks for homologue series trend consistency are done.
 }
 \examples{
+\dontrun{
 # Targeted Run:
-detectHomologues(peak_table, mz_min = NA, mz_max = NA, rt_min, rt_max, ppm_tolerance, search_mode = "targeted", mz_steps = c(14.0156, 44.02628), min_series_length = 5, step_mode = "increment")
+detectHomologues(peak_table, mz_min = NA, mz_max = NA, rt_min, rt_max,
+                 ppm_tolerance, search_mode = "targeted",
+                 mz_steps = c(14.0156, 44.02628), min_series_length = 5,
+                 step_mode = "increment")
 # Untargeted Run:
-detectHomologues(peak_table, mz_min = 10, mz_max = 20, rt_min, rt_max, ppm_tolerance, search_mode = "untargeted", mz_steps = NA, min_series_length = 5, step_mode = "increment")
+detectHomologues(peak_table, mz_min = 10, mz_max = 20, rt_min,
+                 rt_max, ppm_tolerance, search_mode = "untargeted",
+                 mz_steps = NA, min_series_length = 5,
+                 step_mode = "increment")
+}
 }
