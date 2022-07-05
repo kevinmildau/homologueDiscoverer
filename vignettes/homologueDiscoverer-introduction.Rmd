@@ -99,8 +99,8 @@ plotAnnotatedStatic(dual_annotated) # use ptbPlotInteractive for interactive plo
 The augmented database can also be inspected numerically from the console, and summaries for the homologues can be created:
 
 ```{r db_example, fig.height = 8, fig.width = 7, fig.align = "center"}
-print(dual_annotated, width = Inf)
+print(sdb, width = Inf)
 
-summary <- sdbSummarize(dual_annotated)
+summary <- sdbSummarize(sdb)
 ```
 
